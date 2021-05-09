@@ -3,12 +3,12 @@
 
 # --                                                            ; {{{1
 #
-# File        : kanjidraw/__main__.py
+# File        : kanjidraw/lib.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
 # Date        : 2021-05-09
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
-# Version     : v0.0.1
+# Version     : v0.1.0
 # License     : AGPLv3+
 #
 # --                                                            ; }}}1
@@ -16,7 +16,7 @@
                                                                 # {{{1
 r"""
 
-...
+Handwritten kanji recognition library.
 
 """                                                             # }}}1
 
@@ -25,6 +25,8 @@ import xml.etree.ElementTree as ET
 
 from collections import namedtuple
 from enum import Enum
+
+__version__ = "0.1.0"
 
 DATAFILE = os.path.join(os.path.dirname(__file__), "data.json")
 
@@ -39,7 +41,6 @@ MOVE_DIRECTION_WEIGHT   = 0.8
 STROKE_LOCATION_WEIGHT  = 0.6
 CLOSE_WEIGHT            = 0.7
 
-Line      = namedtuple("Line", "x1 y1 x2 y2".split())
 DirAndLoc = namedtuple("DirAndLoc", "starts ends dirs moves".split())
 
 class Direction(Enum):                                          # {{{1
@@ -67,7 +68,7 @@ class Direction(Enum):                                          # {{{1
 
   @classmethod
   def of_move(cls, l1, l2, threshold = DIRECTION_THRESHOLD):
-    return cls.of_line(Line(*(l1[2:] + l2[:2])), threshold)
+    return cls.of_line(tuple(l1[2:] + l2[:2]), threshold)
 
   def isclose(a, b):
     return (a == a.X or b == a.X or a == b) or \
@@ -101,8 +102,8 @@ class Location(Enum):                                           # {{{1
 
 # FIXME: better error messages
 def strict_match(a, b):                                         # {{{1
-  if len(a) != len(b):
-    raise ValueError("must have same length")                 #  FIXME
+  """Strict comparison; returns a percentage score as a float."""
+  if len(a) != len(b): raise ValueError("must have same length")
   dal_a = _directions_and_locations(a)
   dal_b = _directions_and_locations(b)
   score, l = 0.0, len(a)
@@ -137,6 +138,7 @@ def _directions_and_locations(lines):
     tuple(map(Direction.of_move, lines[1:], lines[:-1]))
   )
 
+# FIXME: better kanji unicode ranges
 def parse_kanjivg(file):                                        # {{{1
   data = {}
   with gzip.open(file) as f:
@@ -145,14 +147,14 @@ def parse_kanjivg(file):                                        # {{{1
       code  = int(e.get("id").replace("kvg:kanji_", ""), 16)
       char  = chr(code)
       paths = tuple( _path_to_line(p.get("d")) for p in e.findall(".//path") )
-      if not (0x4e00 <= code <= 0x9fff): continue             #  FIXME
+      if not (0x4e00 <= code <= 0x9fff): continue
       kanji = data.setdefault(len(paths), {})
       assert char not in kanji
       kanji[char] = paths
   return data
                                                                 # }}}1
 
-# FIXME: handle errors; normalise?
+# FIXME: handle errors better? normalise?
 # https://www.w3.org/TR/SVG/paths.html
 def _path_to_line(path):                                        # {{{1
   assert path[0] in "Mm"                                      #  FIXME
@@ -174,19 +176,25 @@ def _path_to_line(path):                                        # {{{1
     else:
       assert False
   assert all( 0 <= v < 109 for v in [x1, y1, x2, y2] )
-  return Line(*( int(v * 255 / 109) for v in [x1, y1, x2, y2] ))
+  return tuple( int(v * 255 / 109) for v in [x1, y1, x2, y2] )
                                                                 # }}}1
 
 def load_json(file = DATAFILE):
+  """Load data from JSON file."""
   with open(file) as fh:
     return { int(k): v for k, v in json.load(fh).items() }
 
 def save_json(file, data):
+  """Save data to JSON file."""
   with open(file, "w") as fh:
     json.dump(data, fh, sort_keys = True)
 
 def matches(lines, data, match = strict_match, max_results = 25,
             cutoff = 0.75):
+  """
+  Find best matches; yields a (score, kanji) pair for the first
+  max_results matches that have a score >= max_score * cutoff.
+  """
   it = data[len(lines)].items()
   ms = sorted(( (match(lines, l), k) for k, l in it ), reverse = True)
   max_score = ms[0][0]

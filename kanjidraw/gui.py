@@ -16,36 +16,40 @@
                                                                 # {{{1
 r"""
 
-...
+Tkinter GUI.
 
 """                                                             # }}}1
 
 import sys
 
+import tkinter as tk
+import tkinter.font as tk_font
+from tkinter import Tk, Button, Canvas, Frame, Label
+
 from . import load_json, matches
 
-def tkinter_main():                                             # {{{1
-  import tkinter as tk
-  import tkinter.font as tk_font
-  from tkinter import Tk, Button, Canvas, Frame, Label
+NAME, TITLE = "kanjidraw", "Kanji Draw"
+HEIGHT, WIDTH, BACKGROUND = 400, 400, "#ccc"
+ROWS, LINEWIDTH, FONTSIZE = 5, 5, 35
+
+def gui():                                                      # {{{1
+  """Tkinter GUI."""
 
   win = Tk()
-  win.title("Kanji Draw")
+  win.title(TITLE)
   win.columnconfigure(0, weight = 1)
   win.rowconfigure(0, weight = 1)
-
-  height, width, bg, rows = 400, 400, "#ccc", 5
-  font = tk_font.Font(size = 35)
+  font = tk_font.Font(size = FONTSIZE)
 
   data = load_json()
   max_strokes = max(data.keys())
   drawing, x, y, strokes, lines = False, 0, 0, [], []
 
   def on_mousedown(event):
+    nonlocal drawing, x, y
     if len(strokes) < max_strokes:
-      nonlocal drawing, x, y
       drawing, x, y = True, event.x, event.y
-      strokes.append([x * 255.0 / height, y * 255.0 / width])
+      strokes.append([x * 255.0 / HEIGHT, y * 255.0 / WIDTH])
       lines.append([])
       enable_buttons()
 
@@ -60,7 +64,7 @@ def tkinter_main():                                             # {{{1
     if drawing:
       draw_line(x, y, event.x, event.y)
       drawing, x, y = False, event.x, event.y
-      strokes[-1] += [x * 255.0 / height, y * 255.0 / width]
+      strokes[-1] += [x * 255.0 / HEIGHT, y * 255.0 / WIDTH]
       update_strokes()
 
   def on_undo():
@@ -81,11 +85,12 @@ def tkinter_main():                                             # {{{1
   def on_done():
     results_frame = Frame(win)
     for i, (_, kanji) in enumerate(matches(strokes, data)):
-      results_frame.columnconfigure(i % rows, weight = 1)
-      results_frame.rowconfigure(i // rows, weight = 1)
+      col, row = i % ROWS, i // ROWS
+      results_frame.columnconfigure(col, weight = 1)
+      results_frame.rowconfigure(row, weight = 1)
       btn = Button(results_frame, text = kanji, font = font,
                    command = on_select_kanji(results_frame, kanji))
-      btn.grid(column = i % rows, row = i // rows, sticky = "nsew")
+      btn.grid(column = col, row = row, sticky = "nsew")
     results_frame.grid(row = 0, column = 0, sticky = "nsew")
 
   def on_select_kanji(results_frame, kanji):
@@ -96,7 +101,8 @@ def tkinter_main():                                             # {{{1
     return handler
 
   def draw_line(x1, y1, x2, y2):
-    l = canvas.create_line(x1, y1, x2, y2, width = 5, capstyle = tk.ROUND)
+    l = canvas.create_line(x1, y1, x2, y2, width = LINEWIDTH,
+                           capstyle = tk.ROUND)
     lines[-1].append(l)
 
   def disable_buttons():
@@ -114,15 +120,15 @@ def tkinter_main():                                             # {{{1
     win.clipboard_clear()
     win.clipboard_append(text)
 
-  draw_frame = Frame(win)
-  btns = Frame(draw_frame)
-  btn_undo = Button(btns, text = "Undo", command = on_undo)
-  btn_clear = Button(btns, text = "Clear", command = on_clear)
+  draw_frame  = Frame(win)
+  btns        = Frame(draw_frame)
+  btn_undo    = Button(btns, text = "Undo", command = on_undo)
+  btn_clear   = Button(btns, text = "Clear", command = on_clear)
   lbl_strokes = Label(btns, text = "Strokes: 0")
-  btn_done = Button(btns, text = "Done", command = on_done)
+  btn_done    = Button(btns, text = "Done", command = on_done)
   disable_buttons()
 
-  canvas = Canvas(draw_frame, height = height, width = width, bg = bg)
+  canvas = Canvas(draw_frame, height = HEIGHT, width = WIDTH, bg = BACKGROUND)
   canvas.bind("<ButtonPress-1>", on_mousedown)
   canvas.bind("<B1-Motion>", on_mousemove)
   canvas.bind("<ButtonRelease-1>", on_mouseup)
@@ -132,9 +138,15 @@ def tkinter_main():                                             # {{{1
   btns.pack()
   canvas.pack()
   draw_frame.grid(row = 0, column = 0, sticky = "nsew")
-
   win.mainloop()
                                                                 # }}}1
+
+def main():
+  if "--version" in sys.argv:
+    from .lib import __version__
+    print("{} v{}".format(NAME, __version__))
+  else:
+    gui()
 
 if __name__ == "__main__":
   if "--doctest" in sys.argv:
@@ -142,6 +154,6 @@ if __name__ == "__main__":
     import doctest
     if doctest.testmod(verbose = verbose)[0]: sys.exit(1)
   else:
-    tkinter_main()
+    main()
 
 # vim: set tw=70 sw=2 sts=2 et fdm=marker :

@@ -1,1 +1,2 @@
-from .__main__ import *
+from .lib import *
+from .lib import __version__
