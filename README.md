@@ -11,14 +11,11 @@
 }}}1 -->
 
 [![GitHub Release](https://img.shields.io/github/release/obfusk/kanjidraw.svg?logo=github)](https://github.com/obfusk/kanjidraw/releases)
+[![PyPI Version](https://img.shields.io/pypi/v/kanjidraw.svg)](https://pypi.python.org/pypi/kanjidraw)
+[![Python Versions](https://img.shields.io/pypi/pyversions/kanjidraw.svg)](https://pypi.python.org/pypi/kanjidraw)
 [![CI](https://github.com/obfusk/kanjidraw/workflows/CI/badge.svg)](https://github.com/obfusk/kanjidraw/actions?query=workflow%3ACI)
 [![AGPLv3+](https://img.shields.io/badge/license-AGPLv3+-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.html)
 [![Sponsor](https://img.shields.io/badge/%E2%99%A5-support-violet.svg)](https://ko-fi.com/obfusk)
-
-<!--
-[![PyPI Version](https://img.shields.io/pypi/v/kanjidraw.svg)](https://pypi.python.org/pypi/kanjidraw)
-[![Python Versions](https://img.shields.io/pypi/pyversions/kanjidraw.svg)](https://pypi.python.org/pypi/kanjidraw)
--->
 
 ## kanjidraw - handwritten kanji recognition
 
