@@ -1,0 +1,11 @@
+__pycache__
+
+/build
+/dist
+/kanjidraw.egg-info
+
+.coverage
+/htmlcov
+
+*.xml
+*.xml.gz
