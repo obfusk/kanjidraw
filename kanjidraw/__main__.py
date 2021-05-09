@@ -3,7 +3,7 @@
 
 # --                                                            ; {{{1
 #
-# File        : kanjidraw.py
+# File        : kanjidraw/__main__.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
 # Date        : 2021-05-09
 #
@@ -20,20 +20,26 @@ r"""
 
 """                                                             # }}}1
 
-import gzip, re
+import gzip, json, os, re, sys
 import xml.etree.ElementTree as ET
 
 from collections import namedtuple
 from enum import Enum
 
+DATAFILE = os.path.join(os.path.dirname(__file__), "data.json")
+
 ARGS_RX = re.compile(r"(-?(?:\d*\.)?\d+)[\s,]*")
 PATH_RX = re.compile(r"([MZCS])\s*((?:(?:-?(?:\d*\.)?\d+)[\s,]*)*)", re.I)
 
-DIRECTION_THRESHOLD = 51
-DIAGONAL_THRESHOLD  = 77
+DIRECTION_THRESHOLD     = 51
+DIAGONAL_THRESHOLD      = 77
 
-Line = namedtuple("Line", "x1 y1 x2 y2".split())
+STROKE_DIRECTION_WEIGHT = 1.0
+MOVE_DIRECTION_WEIGHT   = 0.8
+STROKE_LOCATION_WEIGHT  = 0.6
+CLOSE_WEIGHT            = 0.7
 
+Line      = namedtuple("Line", "x1 y1 x2 y2".split())
 DirAndLoc = namedtuple("DirAndLoc", "starts ends dirs moves".split())
 
 class Direction(Enum):                                          # {{{1
@@ -64,8 +70,8 @@ class Direction(Enum):                                          # {{{1
     return cls.of_line(Line(*(l1[2:] + l2[:2])), threshold)
 
   def isclose(a, b):
-    return (a == cls.X or b == cls.X or a == b) or \
-           (a == ((b+1)%8) or ((a+1)%8) == b)
+    return (a == a.X or b == a.X or a == b) or \
+           (a.value == ((b.value+1)%8) or ((a.value+1)%8) == b.value)
                                                                 # }}}1
 
 class Location(Enum):                                           # {{{1
@@ -89,16 +95,38 @@ class Location(Enum):                                           # {{{1
       return cls.NE if y < 85 else (cls.E if y < 170 else cls.SE)
 
   def isclose(a, b):
-    return abs(a[0] - b[0]) <= 1 and abs(a[1] - b[1]) <= 1
+    return abs(a.value[0] - b.value[0]) <= 1 and \
+           abs(a.value[1] - b.value[1]) <= 1
                                                                 # }}}1
 
-# ... TODO ...
-
 # FIXME: better error messages
-def compare_strict(a, b):                                       # {{{1
+def strict_match(a, b):                                         # {{{1
   if len(a) != len(b):
     raise ValueError("must have same length")                 #  FIXME
-  ...
+  dal_a = _directions_and_locations(a)
+  dal_b = _directions_and_locations(b)
+  score, l = 0.0, len(a)
+  for i in range(l):
+    if dal_a.dirs[i] == dal_b.dirs[i]:
+      score += STROKE_DIRECTION_WEIGHT
+    elif dal_a.dirs[i].isclose(dal_b.dirs[i]):
+      score += STROKE_DIRECTION_WEIGHT * CLOSE_WEIGHT
+    if i > 0:
+      if dal_a.moves[i-1] == dal_b.moves[i-1]:
+        score += MOVE_DIRECTION_WEIGHT
+      elif dal_a.moves[i-1].isclose(dal_b.moves[i-1]):
+        score += MOVE_DIRECTION_WEIGHT * CLOSE_WEIGHT
+    if dal_a.starts[i] == dal_b.starts[i]:
+      score += STROKE_LOCATION_WEIGHT
+    elif dal_a.starts[i].isclose(dal_b.starts[i]):
+      score += STROKE_LOCATION_WEIGHT * CLOSE_WEIGHT
+    if dal_a.ends[i] == dal_b.ends[i]:
+      score += STROKE_LOCATION_WEIGHT
+    elif dal_a.ends[i].isclose(dal_b.ends[i]):
+      score += STROKE_LOCATION_WEIGHT * CLOSE_WEIGHT
+  m = l * (STROKE_DIRECTION_WEIGHT + 2 * STROKE_LOCATION_WEIGHT) \
+    + (l-1) * MOVE_DIRECTION_WEIGHT
+  return 100 * score / m
                                                                 # }}}1
 
 def _directions_and_locations(lines):
@@ -118,8 +146,9 @@ def parse_kanjivg(file):                                        # {{{1
       char  = chr(code)
       paths = tuple( _path_to_line(p.get("d")) for p in e.findall(".//path") )
       if not (0x4e00 <= code <= 0x9fff): continue             #  FIXME
-      assert char not in data
-      data[char] = paths
+      kanji = data.setdefault(len(paths), {})
+      assert char not in kanji
+      kanji[char] = paths
   return data
                                                                 # }}}1
 
@@ -147,6 +176,23 @@ def _path_to_line(path):                                        # {{{1
   assert all( 0 <= v < 109 for v in [x1, y1, x2, y2] )
   return Line(*( int(v * 255 / 109) for v in [x1, y1, x2, y2] ))
                                                                 # }}}1
+
+def load_json(file = DATAFILE):
+  with open(file) as fh:
+    return { int(k): v for k, v in json.load(fh).items() }
+
+def save_json(file, data):
+  with open(file, "w") as fh:
+    json.dump(data, fh, sort_keys = True)
+
+def matches(lines, data, match = strict_match, max_results = 25,
+            cutoff = 0.75):
+  it = data[len(lines)].items()
+  ms = sorted(( (match(lines, l), k) for k, l in it ), reverse = True)
+  max_score = ms[0][0]
+  for m in ms[:max_results]:
+    if m[0] < max_score * cutoff: break
+    yield m
 
 if __name__ == "__main__":
   if "--doctest" in sys.argv:
