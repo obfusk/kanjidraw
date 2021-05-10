@@ -5,7 +5,7 @@
 #
 # File        : kanjidraw/gui.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-09
+# Date        : 2021-05-10
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.0.1
@@ -16,7 +16,7 @@
                                                                 # {{{1
 r"""
 
-Tkinter GUI.
+Handwritten kanji recognition: tkinter GUI.
 
 """                                                             # }}}1
 
@@ -26,7 +26,7 @@ import tkinter as tk
 import tkinter.font as tk_font
 from tkinter import Tk, Button, Canvas, Frame, Label
 
-from . import load_json, matches
+from .lib import kanji_data, matches
 
 NAME, TITLE = "kanjidraw", "Kanji Draw"
 HEIGHT, WIDTH, BACKGROUND = 400, 400, "#ccc"
@@ -39,10 +39,9 @@ def gui():                                                      # {{{1
   win.title(TITLE)
   win.columnconfigure(0, weight = 1)
   win.rowconfigure(0, weight = 1)
-  font = tk_font.Font(size = FONTSIZE)
 
-  data = load_json()
-  max_strokes = max(data.keys())
+  font = tk_font.Font(size = FONTSIZE)
+  max_strokes = max(kanji_data().keys())
   drawing, x, y, strokes, lines = False, 0, 0, [], []
 
   def on_mousedown(event):
@@ -54,27 +53,22 @@ def gui():                                                      # {{{1
       enable_buttons()
 
   def on_mousemove(event):
-    nonlocal x, y
-    if drawing:
-      draw_line(x, y, event.x, event.y)
-      x, y = event.x, event.y
+    if drawing: draw_line(event.x, event.y)
 
   def on_mouseup(event):
-    nonlocal drawing, x, y
+    nonlocal drawing
     if drawing:
-      draw_line(x, y, event.x, event.y)
-      drawing, x, y = False, event.x, event.y
+      draw_line(event.x, event.y)
+      drawing = False
       strokes[-1] += [x * 255.0 / HEIGHT, y * 255.0 / WIDTH]
       update_strokes()
 
   def on_undo():
     if strokes:
       strokes.pop()
-      for l in lines.pop():
-        canvas.delete(l)
+      for l in lines.pop(): canvas.delete(l)
       update_strokes()
-      if not strokes:
-        disable_buttons()
+      if not strokes: disable_buttons()
 
   def on_clear():
     strokes.clear()
@@ -83,35 +77,49 @@ def gui():                                                      # {{{1
     disable_buttons()
 
   def on_done():
-    results_frame = Frame(win)
-    for i, (_, kanji) in enumerate(matches(strokes, data)):
+    res_frame = Frame(win)
+    res_btns  = Frame(res_frame)
+    btn_back  = Button(res_btns, text = "Go Back", command = on_back(res_frame))
+    lbl_info  = Label(res_btns, text = "Click to copy to clipboard")
+    res_grid  = Frame(res_frame)
+    for i, (_, kanji) in enumerate(matches(strokes)):
       col, row = i % ROWS, i // ROWS
-      results_frame.columnconfigure(col, weight = 1)
-      results_frame.rowconfigure(row, weight = 1)
-      btn = Button(results_frame, text = kanji, font = font,
-                   command = on_select_kanji(results_frame, kanji))
+      res_grid.columnconfigure(col, weight = 1)
+      res_grid.rowconfigure(row, weight = 1)
+      btn = Button(res_grid, text = kanji, font = font,
+                   command = on_select_kanji(res_frame, kanji))
       btn.grid(column = col, row = row, sticky = "nsew")
-    results_frame.grid(row = 0, column = 0, sticky = "nsew")
+    btn_back.pack(side = tk.LEFT, padx = 5, pady = 5)
+    lbl_info.pack(side = tk.LEFT, padx = 5, pady = 5)
+    res_btns.pack()
+    res_grid.pack()
+    res_frame.grid(row = 0, column = 0, sticky = "nsew")
+    win.bind("<Escape>", on_back(res_frame))
 
-  def on_select_kanji(results_frame, kanji):
-    def handler():
+  def on_back(res_frame):
+    def f(event = None):
+      win.unbind("<Escape>")
+      res_frame.destroy()
+    return f
+
+  def on_select_kanji(res_frame, kanji):
+    def f():
       copy_to_clipboard(kanji)
-      results_frame.destroy()
+      res_frame.destroy()
       on_clear()
-    return handler
+    return f
 
-  def draw_line(x1, y1, x2, y2):
-    l = canvas.create_line(x1, y1, x2, y2, width = LINEWIDTH,
-                           capstyle = tk.ROUND)
+  def draw_line(x2, y2):
+    nonlocal x, y
+    l = canvas.create_line(x, y, x2, y2, width = LINEWIDTH, capstyle = tk.ROUND)
     lines[-1].append(l)
+    x, y = x2, y2
 
   def disable_buttons():
-    for w in [btn_undo, btn_clear, btn_done]:
-      w.config(state = tk.DISABLED)
+    for w in [btn_undo, btn_clear, btn_done]: w.config(state = tk.DISABLED)
 
   def enable_buttons():
-    for w in [btn_undo, btn_clear, btn_done]:
-      w.config(state = tk.NORMAL)
+    for w in [btn_undo, btn_clear, btn_done]: w.config(state = tk.NORMAL)
 
   def update_strokes():
     lbl_strokes.config(text = "Strokes: {}".format(len(strokes)))

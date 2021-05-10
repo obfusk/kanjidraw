@@ -5,10 +5,10 @@
 #
 # File        : kanjidraw/lib.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-09
+# Date        : 2021-05-10
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
-# Version     : v0.1.0
+# Version     : v0.1.1
 # License     : AGPLv3+
 #
 # --                                                            ; }}}1
@@ -16,17 +16,64 @@
                                                                 # {{{1
 r"""
 
-Handwritten kanji recognition library.
+Handwritten kanji recognition: library.
+
+>>> strokes = [[125.5875, 28.6875, 48.45, 196.35], [104.55, 93.7125, 195.7125, 223.125]]
+>>> for s, k in matches(strokes): print(int(s), k)
+99 人
+96 九
+96 乂
+93 八
+93 入
+90 儿
+89 勹
+88 乃
+87 又
+87 几
+87 冂
+85 匕
+82 亻
+81 卜
+78 亠
+75 冖
+
+>>> strokes = [[17.85, 102.0, 83.5125, 51.0], [45.9, 26.775, 49.0875, 210.375], [33.7875, 152.3625, 61.8375, 133.875], [103.9125, 54.825, 211.0125, 58.65], [139.6125, 31.2375, 142.8, 64.3875], [178.5, 42.075, 179.1375, 66.3], [108.375, 121.125, 106.4625, 182.325], [113.475, 114.1125, 205.275, 189.975], [163.2, 116.025, 164.475, 181.05], [126.225, 148.5375, 198.2625, 158.7375], [109.0125, 200.8125, 205.9125, 191.25]]
+>>> for s, k in matches(strokes): print(int(s), k)
+91 描
+89 猫
+86 桷
+85 淌
+84 猟
+83 掩
+83 培
+82 猛
+82 控
+82 清
+82 捨
+81 陪
+81 措
+81 袷
+81 掠
+81 淹
+80 桶
+80 掘
+80 舳
+80 猪
+80 掃
+79 情
+79 捺
+79 陷
+79 探
 
 """                                                             # }}}1
 
-import gzip, json, os, re, sys
+import gzip, itertools, json, os, re, sys
 import xml.etree.ElementTree as ET
 
 from collections import namedtuple
 from enum import Enum
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 DATAFILE = os.path.join(os.path.dirname(__file__), "data.json")
 
@@ -41,7 +88,7 @@ MOVE_DIRECTION_WEIGHT   = 0.8
 STROKE_LOCATION_WEIGHT  = 0.6
 CLOSE_WEIGHT            = 0.7
 
-DirAndLoc = namedtuple("DirAndLoc", "starts ends dirs moves".split())
+SEDM = namedtuple("SEDM", "starts ends dirs moves".split())
 
 class Direction(Enum):                                          # {{{1
   X, N, NE, E, SE, S, SW, W, NW = range(-1, 8)
@@ -131,15 +178,32 @@ def strict_match(a, b):                                         # {{{1
                                                                 # }}}1
 
 def _directions_and_locations(lines):
-  return DirAndLoc(
+  return SEDM(
     tuple( Location.of_point(*l[:2]) for l in lines ),
     tuple( Location.of_point(*l[2:]) for l in lines ),
     tuple(map(Direction.of_line, lines)),
     tuple(map(Direction.of_move, lines[1:], lines[:-1]))
   )
 
+def matches(lines, data = None, match = strict_match,
+            max_results = 25, cutoff = 0.75):
+  """
+  Find best matches; yields a (score, kanji) pair for the first
+  max_results matches that have a score >= max_score * cutoff.
+  """
+  if data is None: data = kanji_data()
+  it = data[len(lines)].items()
+  ms = sorted(( (match(lines, l), k) for k, l in it ), reverse = True)
+  mm = ms[0][0] * cutoff
+  return itertools.takewhile(lambda m: m[0] >= mm, ms[:max_results])
+
+def kanji_data():
+  if kanji_data._data is None: kanji_data._data = _load_json()
+  return kanji_data._data
+kanji_data._data = None
+
 # FIXME: better kanji unicode ranges
-def parse_kanjivg(file):                                        # {{{1
+def _parse_kanjivg(file):                                       # {{{1
   data = {}
   with gzip.open(file) as f:
     for e in ET.parse(f).getroot():
@@ -179,28 +243,15 @@ def _path_to_line(path):                                        # {{{1
   return tuple( int(v * 255 / 109) for v in [x1, y1, x2, y2] )
                                                                 # }}}1
 
-def load_json(file = DATAFILE):
+def _load_json(file = DATAFILE):
   """Load data from JSON file."""
   with open(file) as fh:
     return { int(k): v for k, v in json.load(fh).items() }
 
-def save_json(file, data):
+def _save_json(file, data):
   """Save data to JSON file."""
   with open(file, "w") as fh:
     json.dump(data, fh, sort_keys = True)
-
-def matches(lines, data, match = strict_match, max_results = 25,
-            cutoff = 0.75):
-  """
-  Find best matches; yields a (score, kanji) pair for the first
-  max_results matches that have a score >= max_score * cutoff.
-  """
-  it = data[len(lines)].items()
-  ms = sorted(( (match(lines, l), k) for k, l in it ), reverse = True)
-  max_score = ms[0][0]
-  for m in ms[:max_results]:
-    if m[0] < max_score * cutoff: break
-    yield m
 
 if __name__ == "__main__":
   if "--doctest" in sys.argv:
