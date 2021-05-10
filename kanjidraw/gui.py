@@ -29,8 +29,8 @@ from tkinter import Tk, Button, Canvas, Frame, Label
 from .lib import kanji_data, matches
 
 NAME, TITLE = "kanjidraw", "Kanji Draw"
-HEIGHT, WIDTH, BACKGROUND = 400, 400, "#ccc"
-ROWS, LINEWIDTH, FONTSIZE = 5, 5, 35
+HEIGHT = WIDTH = 400
+BACKGROUND, COLS, LINEWIDTH, FONTSIZE = "#ccc", 5, 5, 35
 
 def gui():                                                      # {{{1
   """Tkinter GUI."""
@@ -48,7 +48,7 @@ def gui():                                                      # {{{1
     nonlocal drawing, x, y
     if len(strokes) < max_strokes:
       drawing, x, y = True, event.x, event.y
-      strokes.append([x * 255.0 / HEIGHT, y * 255.0 / WIDTH])
+      strokes.append([x * 255.0 / WIDTH, y * 255.0 / HEIGHT])
       lines.append([])
       enable_buttons()
 
@@ -60,7 +60,7 @@ def gui():                                                      # {{{1
     if drawing:
       draw_line(event.x, event.y)
       drawing = False
-      strokes[-1] += [x * 255.0 / HEIGHT, y * 255.0 / WIDTH]
+      strokes[-1] += [x * 255.0 / WIDTH, y * 255.0 / HEIGHT]
       update_strokes()
 
   def on_undo():
@@ -72,6 +72,7 @@ def gui():                                                      # {{{1
 
   def on_clear():
     strokes.clear()
+    lines.clear()
     canvas.delete("all")
     update_strokes()
     disable_buttons()
@@ -83,7 +84,7 @@ def gui():                                                      # {{{1
     lbl_info  = Label(res_btns, text = "Click to copy to clipboard")
     res_grid  = Frame(res_frame)
     for i, (_, kanji) in enumerate(matches(strokes)):
-      col, row = i % ROWS, i // ROWS
+      col, row = i % COLS, i // COLS
       res_grid.columnconfigure(col, weight = 1)
       res_grid.rowconfigure(row, weight = 1)
       btn = Button(res_grid, text = kanji, font = font,
