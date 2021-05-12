@@ -5,7 +5,7 @@
 #
 # File        : kanjidraw/lib.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-10
+# Date        : 2021-05-12
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.1.1
@@ -222,7 +222,10 @@ def _parse_kanjivg(file):                                       # {{{1
 # https://www.w3.org/TR/SVG/paths.html
 def _path_to_line(path):                                        # {{{1
   assert path[0] in "Mm"                                      #  FIXME
+  last = 0
   for i, m in enumerate(PATH_RX.finditer(path)):
+    assert m.start() == last
+    last = m.end()
     cmd, args = m.group(1), tuple(map(float, ARGS_RX.findall(m.group(2))))
     if cmd in "Mm":   # moveto
       assert i == 0
@@ -239,6 +242,7 @@ def _path_to_line(path):                                        # {{{1
       x2, y2 = (x, y) if cmd.isupper() else (x2 + x, y2 + y)
     else:
       assert False
+  assert last == len(path)
   assert all( 0 <= v < 109 for v in [x1, y1, x2, y2] )
   return tuple( int(v * 255 / 109) for v in [x1, y1, x2, y2] )
                                                                 # }}}1
