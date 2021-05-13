@@ -8,7 +8,7 @@
 # Date        : 2021-05-13
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
-# Version     : v0.1.1
+# Version     : v0.2.0
 # License     : AGPLv3+
 #
 # --                                                            ; }}}1
@@ -73,7 +73,7 @@ import xml.etree.ElementTree as ET
 from collections import namedtuple
 from enum import Enum
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 DATAFILE = os.path.join(os.path.dirname(__file__), "data.json")
 

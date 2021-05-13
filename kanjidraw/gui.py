@@ -5,10 +5,10 @@
 #
 # File        : kanjidraw/gui.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-10
+# Date        : 2021-05-13
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
-# Version     : v0.0.1
+# Version     : v0.2.0
 # License     : AGPLv3+
 #
 # --                                                            ; }}}1
