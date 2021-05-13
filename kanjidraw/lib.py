@@ -5,7 +5,7 @@
 #
 # File        : kanjidraw/lib.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-12
+# Date        : 2021-05-13
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.1.1
@@ -67,7 +67,7 @@ Handwritten kanji recognition: library.
 
 """                                                             # }}}1
 
-import gzip, itertools, json, os, re, sys
+import gzip, functools, itertools, json, os, re, sys
 import xml.etree.ElementTree as ET
 
 from collections import namedtuple
@@ -87,6 +87,9 @@ STROKE_DIRECTION_WEIGHT = 1.0
 MOVE_DIRECTION_WEIGHT   = 0.8
 STROKE_LOCATION_WEIGHT  = 0.6
 CLOSE_WEIGHT            = 0.7
+
+MAX_RESULTS             = 25
+CUTOFF                  = 0.75
 
 SEDM = namedtuple("SEDM", "starts ends dirs moves".split())
 
@@ -122,6 +125,7 @@ class Direction(Enum):                                          # {{{1
            (a.value == ((b.value+1)%8) or ((a.value+1)%8) == b.value)
                                                                 # }}}1
 
+@functools.total_ordering
 class Location(Enum):                                           # {{{1
   N   = (1, 0)
   NE  = (2, 0)
@@ -145,9 +149,14 @@ class Location(Enum):                                           # {{{1
   def isclose(a, b):
     return abs(a.value[0] - b.value[0]) <= 1 and \
            abs(a.value[1] - b.value[1]) <= 1
+
+  def __lt__(a, b):
+    return a.value < b.value
+
+  def __eq__(a, b):
+    return a.value == b.value
                                                                 # }}}1
 
-# FIXME: better error messages
 def strict_match(a, b):                                         # {{{1
   """Strict comparison; returns a percentage score as a float."""
   if len(a) != len(b): raise ValueError("must have same length")
@@ -177,6 +186,31 @@ def strict_match(a, b):                                         # {{{1
   return 100 * score / m
                                                                 # }}}1
 
+def fuzzy_match(a, b):
+  """Fuzzy comparison; ignores order and direction of strokes."""
+  if len(a) != len(b): raise ValueError("must have same length")
+  return strict_match(_fuzzy_sort(a), _fuzzy_sort(b))
+
+def match_offby1(match):
+  """Comparison ± 1 stroke."""
+  def f (a, b):
+    if abs(len(a) - len(b)) != 1: raise ValueError("length difference must be 1")
+    if len(a) > len(b): a, b = b, a
+    return max( match(a, b[:i] + b[i+1:]) for i in range(len(b)) )
+  return f
+
+def _fuzzy_sort(lines):                                         # {{{1
+  result = []
+  for line in lines:
+    start_p, end_p = line[:2], line[2:]
+    start_l, end_l = Location.of_point(*start_p), Location.of_point(*end_p)
+    if start_l > end_l:
+      start_p, end_p = end_p, start_p
+      start_l, end_l = end_l, start_l
+    result.append((start_l, end_l, start_p + end_p))
+  return tuple( x[2] for x in sorted(result) )
+                                                                # }}}1
+
 def _directions_and_locations(lines):
   return SEDM(
     tuple( Location.of_point(*l[:2]) for l in lines ),
@@ -185,14 +219,42 @@ def _directions_and_locations(lines):
     tuple(map(Direction.of_move, lines[1:], lines[:-1]))
   )
 
-def matches(lines, data = None, match = strict_match,
-            max_results = 25, cutoff = 0.75):
+def matches(lines, data = None, fuzzy = False, offby1 = False,
+            max_results = MAX_RESULTS, cutoff = CUTOFF):
   """
   Find best matches; yields a (score, kanji) pair for the first
   max_results matches that have a score >= max_score * cutoff.
   """
-  if data is None: data = kanji_data()
-  it = data[len(lines)].items()
+  match = fuzzy_match if fuzzy else strict_match
+  data_items = _data_items_offby1 if offby1 else _data_items
+  if offby1: match = match_offby1(match)
+  return _matches(lines, data, max_results, cutoff, match, data_items)
+
+def strict_matches(*a, **kw):
+  """Find strict matches."""
+  return matches(*a, **kw)
+
+def fuzzy_matches(*a, **kw):
+  """Find fuzzy matches."""
+  return matches(*a, fuzzy = True, **kw)
+
+def strict_matches_offby1(*a, **kw):
+  """Find strict matches ِِ± 1 stroke."""
+  return matches(*a, offby1 = True, **kw)
+
+def fuzzy_matches_offby1(*a, **kw):
+  """Find fuzzy matches ِِ± 1 stroke."""
+  return matches(*a, fuzzy = True, offby1 = True, **kw)
+
+def _data_items(lines, data):
+  return data[len(lines)].items()
+
+def _data_items_offby1(lines, data):
+  for n in [len(lines)-1, len(lines)+1]:
+    if n in data: yield from data[n].items()
+
+def _matches(lines, data, max_results, cutoff, match, data_items):
+  it = data_items(lines, data or kanji_data())
   ms = sorted(( (match(lines, l), k) for k, l in it ), reverse = True)
   mm = ms[0][0] * cutoff
   return itertools.takewhile(lambda m: m[0] >= mm, ms[:max_results])
@@ -202,7 +264,7 @@ def kanji_data():
   return kanji_data._data
 kanji_data._data = None
 
-# FIXME: better kanji unicode ranges
+# FIXME: better kanji unicode ranges?
 def _parse_kanjivg(file):                                       # {{{1
   data = {}
   with gzip.open(file) as f:
@@ -218,10 +280,9 @@ def _parse_kanjivg(file):                                       # {{{1
   return data
                                                                 # }}}1
 
-# FIXME: handle errors better? normalise?
 # https://www.w3.org/TR/SVG/paths.html
 def _path_to_line(path):                                        # {{{1
-  assert path[0] in "Mm"                                      #  FIXME
+  assert path[0] in "Mm"
   last = 0
   for i, m in enumerate(PATH_RX.finditer(path)):
     assert m.start() == last
@@ -232,6 +293,7 @@ def _path_to_line(path):                                        # {{{1
       x1, y1 = x2, y2 = args
     elif cmd in "Zz": # closepath
       assert len(args) == 0
+      assert last == len(path)
       x2, y2 = x1, y1
     elif cmd in "Cc": # curveto
       while args:

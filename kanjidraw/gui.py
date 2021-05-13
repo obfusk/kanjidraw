@@ -23,24 +23,32 @@ Handwritten kanji recognition: tkinter GUI.
 import sys
 
 import tkinter as tk
-import tkinter.font as tk_font
-from tkinter import Tk, Button, Canvas, Frame, Label
+import tkinter.font
 
 from .lib import kanji_data, matches
 
 NAME, TITLE = "kanjidraw", "Kanji Draw"
 HEIGHT = WIDTH = 400
 BACKGROUND, COLS, LINEWIDTH, FONTSIZE = "#ccc", 5, 5, 35
+FONTS = ("Noto Sans CJK JP", "Noto Sans CJK SC", "Noto Sans CJK TC",
+         "IPAexGothic", "IPAGothic")
 
 def gui():                                                      # {{{1
   """Tkinter GUI."""
 
-  win = Tk()
+  win = tk.Tk()
   win.title(TITLE)
   win.columnconfigure(0, weight = 1)
   win.rowconfigure(0, weight = 1)
 
-  font = tk_font.Font(size = FONTSIZE)
+  fonts = set(tkinter.font.families())
+  kanji_font = tk.font.Font(size = FONTSIZE)
+
+  for f in FONTS:
+    if f in fonts:
+      kanji_font = tk.font.Font(family = f, size = FONTSIZE)
+      break
+
   max_strokes = max(kanji_data().keys())
   drawing, x, y, strokes, lines = False, 0, 0, [], []
 
@@ -71,29 +79,29 @@ def gui():                                                      # {{{1
       if not strokes: disable_buttons()
 
   def on_clear():
-    strokes.clear()
-    lines.clear()
+    strokes.clear(); lines.clear()
     canvas.delete("all")
-    update_strokes()
-    disable_buttons()
+    update_strokes(); disable_buttons()
 
   def on_done():
-    res_frame = Frame(win)
-    res_btns  = Frame(res_frame)
-    btn_back  = Button(res_btns, text = "Go Back", command = on_back(res_frame))
-    lbl_info  = Label(res_btns, text = "Click to copy to clipboard")
-    res_grid  = Frame(res_frame)
-    for i, (_, kanji) in enumerate(matches(strokes)):
+    res_frame = tk.Frame(win)
+    res_btns  = tk.Frame(res_frame)
+    btn_back  = tk.Button(res_btns, text = "Go Back", command = on_back(res_frame))
+    lbl_info  = tk.Label(res_btns, text = "Click to copy to clipboard")
+    res_grid  = tk.Frame(res_frame)
+
+    ms = matches(strokes, fuzzy = var_fuzzy.get(), offby1 = var_ob1.get())
+    for i, (_, kanji) in enumerate(ms):
       col, row = i % COLS, i // COLS
       res_grid.columnconfigure(col, weight = 1)
       res_grid.rowconfigure(row, weight = 1)
-      btn = Button(res_grid, text = kanji, font = font,
-                   command = on_select_kanji(res_frame, kanji))
+      btn = tk.Button(res_grid, text = kanji, font = kanji_font,
+                      command = on_select_kanji(res_frame, kanji))
       btn.grid(column = col, row = row, sticky = "nsew")
+
     btn_back.pack(side = tk.LEFT, padx = 5, pady = 5)
     lbl_info.pack(side = tk.LEFT, padx = 5, pady = 5)
-    res_btns.pack()
-    res_grid.pack()
+    res_btns.pack(); res_grid.pack()
     res_frame.grid(row = 0, column = 0, sticky = "nsew")
     win.bind("<Escape>", on_back(res_frame))
 
@@ -129,23 +137,28 @@ def gui():                                                      # {{{1
     win.clipboard_clear()
     win.clipboard_append(text)
 
-  draw_frame  = Frame(win)
-  btns        = Frame(draw_frame)
-  btn_undo    = Button(btns, text = "Undo", command = on_undo)
-  btn_clear   = Button(btns, text = "Clear", command = on_clear)
-  lbl_strokes = Label(btns, text = "Strokes: 0")
-  btn_done    = Button(btns, text = "Done", command = on_done)
-  disable_buttons()
+  draw_frame  = tk.Frame(win)
+  btns        = tk.Frame(draw_frame)
+  btn_undo    = tk.Button(btns, text = "Undo", command = on_undo)
+  btn_clear   = tk.Button(btns, text = "Clear", command = on_clear)
+  lbl_strokes = tk.Label(btns, text = "Strokes: 0")
+  btn_done    = tk.Button(btns, text = "Done", command = on_done)
+  checks      = tk.Frame(draw_frame)
+  var_fuzzy   = tk.IntVar()
+  var_ob1     = tk.IntVar()
+  check_fuzzy = tk.Checkbutton(checks, variable = var_fuzzy, text = "Fuzzy")
+  check_ob1   = tk.Checkbutton(checks, variable = var_ob1, text = "± 1 Stroke")
 
-  canvas = Canvas(draw_frame, height = HEIGHT, width = WIDTH, bg = BACKGROUND)
+  canvas = tk.Canvas(draw_frame, height = HEIGHT, width = WIDTH,
+                     bg = BACKGROUND)
   canvas.bind("<ButtonPress-1>", on_mousedown)
   canvas.bind("<B1-Motion>", on_mousemove)
   canvas.bind("<ButtonRelease-1>", on_mouseup)
 
-  for w in [btn_undo, btn_clear, lbl_strokes, btn_done]:
+  disable_buttons()
+  for w in [btn_undo, btn_clear, lbl_strokes, btn_done, check_fuzzy, check_ob1]:
     w.pack(side = tk.LEFT, padx = 5, pady = 5)
-  btns.pack()
-  canvas.pack()
+  btns.pack(); checks.pack(); canvas.pack()
   draw_frame.grid(row = 0, column = 0, sticky = "nsew")
   win.mainloop()
                                                                 # }}}1
