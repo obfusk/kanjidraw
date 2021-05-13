@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-05-10
+    Date        : 2021-05-13
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.1.1
@@ -27,6 +27,11 @@ list of probable matches, which will then be copied to the clipboard.
 
 The database is based on KanjiVG and the algorithms are based on the
 [Kanji draw](https://github.com/onitake/kanjirecog) Android app.
+
+## Library
+
+For a JavaScript frontend example, see e.g. jiten's
+[`kanjidraw.js`](https://github.com/obfusk/jiten/blob/master/jiten/static/kanjidraw.js).
 
 ## Requirements
 
