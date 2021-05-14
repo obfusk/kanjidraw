@@ -1,0 +1,49 @@
+Source: kanjidraw
+Section: python
+Priority: optional
+Maintainer: Felix C. Stegerman <flx@obfusk.net>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all,
+               python3-setuptools,
+Standards-Version: 4.5.1
+Vcs-Git: https://salsa.debian.org/obfusk/kanjidraw.git
+Vcs-Browser: https://salsa.debian.org/obfusk/kanjidraw
+Homepage: https://github.com/obfusk/kanjidraw
+Rules-Requires-Root: no
+
+Package: kanjidraw
+Architecture: all
+Depends: python3-kanjidraw (=${binary:Version}),
+         python3-tk,
+         ${misc:Depends},
+         ${python3:Depends},
+         ${shlibs:Depends},
+Description: handwritten kanji recognition - gui
+ kanjidraw is a simple Python library + GUI for matching (the strokes of a)
+ handwritten kanji against its database.
+ .
+ You can use the GUI to draw and subsequently select a kanji from the list of
+ probable matches, which will then be copied to the clipboard.
+ .
+ The database is based on KanjiVG and the algorithms are based on the
+ Kanji draw Android app.
+ .
+ This package provides the GUI.
+
+Package: python3-kanjidraw
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         ${shlibs:Depends},
+Description: handwritten kanji recognition - library
+ kanjidraw is a simple Python library + GUI for matching (the strokes of a)
+ handwritten kanji against its database.
+ .
+ You can use the GUI to draw and subsequently select a kanji from the list of
+ probable matches, which will then be copied to the clipboard.
+ .
+ The database is based on KanjiVG and the algorithms are based on the
+ Kanji draw Android app.
+ .
+ This package provides the Python library.

@@ -1,0 +1,5 @@
+#!/usr/bin/make -f
+execute_after_dh_auto_clean:
+	make cleanup
+%:
+	dh $@ --with python3 --buildsystem=pybuild
