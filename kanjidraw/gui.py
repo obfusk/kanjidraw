@@ -5,7 +5,7 @@
 #
 # File        : kanjidraw/gui.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-13
+# Date        : 2021-05-14
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.2.0
@@ -29,7 +29,8 @@ from .lib import kanji_data, matches
 
 NAME, TITLE = "kanjidraw", "Kanji Draw"
 HEIGHT = WIDTH = 400
-BACKGROUND, COLS, LINEWIDTH, FONTSIZE = "#ccc", 5, 5, 35
+BACKGROUND, GRIDCOLOUR = "#ccc", "#aaa"
+COLS, LINEWIDTH, FONTSIZE = 5, 5, 35
 FONTS = ("Noto Sans CJK JP", "Noto Sans CJK SC", "Noto Sans CJK TC",
          "IPAexGothic", "IPAGothic")
 
@@ -80,7 +81,7 @@ def gui():                                                      # {{{1
 
   def on_clear():
     strokes.clear(); lines.clear()
-    canvas.delete("all")
+    canvas.delete("all"); draw_grid()
     update_strokes(); disable_buttons()
 
   def on_done():
@@ -124,6 +125,12 @@ def gui():                                                      # {{{1
     lines[-1].append(l)
     x, y = x2, y2
 
+  def draw_grid():
+    for x in (WIDTH // 3, 2 * WIDTH // 3):
+      canvas.create_line(x, 0, x, HEIGHT, fill = GRIDCOLOUR)
+    for y in (HEIGHT // 3, 2 * HEIGHT // 3):
+      canvas.create_line(0, y, WIDTH, y, fill = GRIDCOLOUR)
+
   def disable_buttons():
     for w in [btn_undo, btn_clear, btn_done]: w.config(state = tk.DISABLED)
 
@@ -146,8 +153,9 @@ def gui():                                                      # {{{1
   checks      = tk.Frame(draw_frame)
   var_fuzzy   = tk.IntVar()
   var_ob1     = tk.IntVar()
-  check_fuzzy = tk.Checkbutton(checks, variable = var_fuzzy, text = "Fuzzy")
-  check_ob1   = tk.Checkbutton(checks, variable = var_ob1, text = "± 1 Stroke")
+  check_fuzzy = tk.Checkbutton(checks, variable = var_fuzzy,
+                               text = "Ignore stroke order & direction")
+  check_ob1   = tk.Checkbutton(checks, variable = var_ob1, text = "± 1 stroke")
 
   canvas = tk.Canvas(draw_frame, height = HEIGHT, width = WIDTH,
                      bg = BACKGROUND)
@@ -155,7 +163,7 @@ def gui():                                                      # {{{1
   canvas.bind("<B1-Motion>", on_mousemove)
   canvas.bind("<ButtonRelease-1>", on_mouseup)
 
-  disable_buttons()
+  draw_grid(); disable_buttons()
   for w in [btn_undo, btn_clear, lbl_strokes, btn_done, check_fuzzy, check_ob1]:
     w.pack(side = tk.LEFT, padx = 5, pady = 5)
   btns.pack(); checks.pack(); canvas.pack()
