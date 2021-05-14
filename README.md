@@ -28,10 +28,11 @@ list of probable matches, which will then be copied to the clipboard.
 The database is based on KanjiVG and the algorithms are based on the
 [Kanji draw](https://github.com/onitake/kanjirecog) Android app.
 
-## Library
+## Demo
 
-For a JavaScript frontend example, see e.g. jiten's
-[`kanjidraw.js`](https://github.com/obfusk/jiten/blob/master/jiten/static/kanjidraw.js).
+[Jiten Japanese Dictionary](https://jiten.obfusk.dev)
+uses `kanjidraw` with a
+[JavaScript frontend](https://github.com/obfusk/jiten/blob/master/jiten/static/kanjidraw.js).
 
 ## Requirements
 
