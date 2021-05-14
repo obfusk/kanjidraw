@@ -1,6 +1,5 @@
-kanjidraw (0.2.0-1) UNRELEASED; urgency=medium
+kanjidraw (0.2.0-1) unstable; urgency=medium
 
-  * Initial release. Closes: #nnnn
-    <nnnn is the bug number of your ITP>
+  * Initial release. Closes: #988516
 
  -- Felix C. Stegerman <flx@obfusk.net>  Fri, 14 May 2021 16:44:35 +0200
