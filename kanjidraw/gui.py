@@ -5,7 +5,7 @@
 #
 # File        : kanjidraw/gui.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-14
+# Date        : 2021-05-17
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.2.0
@@ -20,7 +20,7 @@ Handwritten kanji recognition: tkinter GUI.
 
 """                                                             # }}}1
 
-import sys
+import os, sys
 
 import tkinter as tk
 import tkinter.font
@@ -36,6 +36,9 @@ FONTS = ("Noto Sans CJK JP", "Noto Sans CJK SC", "Noto Sans CJK TC",
 
 def gui():                                                      # {{{1
   """Tkinter GUI."""
+
+  nogrid = os.environ.get("KANJIDRAW_NOGRID") in ("1", "true", "yes")
+  gridcolour = BACKGROUND if nogrid else GRIDCOLOUR
 
   win = tk.Tk()
   win.title(TITLE)
@@ -127,9 +130,9 @@ def gui():                                                      # {{{1
 
   def draw_grid():
     for x in (WIDTH // 3, 2 * WIDTH // 3):
-      canvas.create_line(x, 0, x, HEIGHT, fill = GRIDCOLOUR)
+      canvas.create_line(x, 0, x, HEIGHT, fill = gridcolour)
     for y in (HEIGHT // 3, 2 * HEIGHT // 3):
-      canvas.create_line(0, y, WIDTH, y, fill = GRIDCOLOUR)
+      canvas.create_line(0, y, WIDTH, y, fill = gridcolour)
 
   def disable_buttons():
     for w in [btn_undo, btn_clear, btn_done]: w.config(state = tk.DISABLED)

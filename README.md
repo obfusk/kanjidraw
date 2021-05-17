@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-05-13
+    Date        : 2021-05-17
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.2.0
@@ -74,6 +74,14 @@ To update to the latest development version:
 ```bash
 $ cd kanjidraw
 $ git pull --rebase
+```
+
+## Miscellaneous
+
+### Disabling the Grid
+
+```bash
+$ export KANJIDRAW_NOGRID=1
 ```
 
 ## License
