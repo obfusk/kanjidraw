@@ -5,10 +5,10 @@
 #
 # File        : kanjidraw/lib.py
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-05-17
+# Date        : 2021-05-18
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
-# Version     : v0.2.0
+# Version     : v0.2.1
 # License     : AGPLv3+
 #
 # --                                                            ; }}}1
@@ -77,7 +77,7 @@ import xml.etree.ElementTree as ET
 from collections import namedtuple
 from enum import Enum
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 DATAFILE = os.path.join(os.path.dirname(__file__), "data.json")
 
