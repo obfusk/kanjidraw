@@ -13,11 +13,12 @@ test:
 	$(PYTHON) -m kanjidraw.lib $(VERBOSE) --doctest
 
 clean: cleanup
+	rm -fr kanjidraw.egg-info/
 
 cleanup:
 	find -name '*~' -delete -print
 	rm -fr kanjidraw/__pycache__/
-	rm -fr build/ dist/ kanjidraw.egg-info/
+	rm -fr build/ dist/
 	rm -fr .coverage htmlcov/
 
 install:
