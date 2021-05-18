@@ -76,6 +76,36 @@ $ cd kanjidraw
 $ git pull --rebase
 ```
 
+## Examples
+
+### Kanji Input on Linux
+
+#### kanjidraw-paste
+
+```bash
+#!/bin/bash
+set -e
+pid="$( xdotool getactivewindow getwindowpid )"
+pids() { xdotool search --classname "$1" getwindowpid %@; }
+if pids urxvt | grep -q "^$pid$"; then
+  key=ctrl+alt+v
+elif pids terminal | grep -q "^$pid$"; then
+  key=ctrl+shift+v
+else
+  key=ctrl+v
+fi
+kanjidraw -s "$@" | tr -d '\n' | xclip -i -selection clipboard
+xdotool key --delay 250 "$key"
+```
+
+#### i3 config
+
+```
+for_window [title="Kanji Draw"] floating enable
+bindsym $mod+Control+k exec --no-startup-id kanjidraw-paste --oneshot
+bindsym $mod+Control+m exec --no-startup-id kanjidraw-paste --multiple
+```
+
 ## Miscellaneous
 
 ### Disabling the Grid

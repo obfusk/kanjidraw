@@ -20,12 +20,12 @@ Handwritten kanji recognition: tkinter GUI.
 
 """                                                             # }}}1
 
-import os, sys
+import argparse, os, sys
 
 import tkinter as tk
 import tkinter.font
 
-from .lib import kanji_data, matches
+from .lib import kanji_data, matches, __version__
 
 NAME, TITLE = "kanjidraw", "Kanji Draw"
 HEIGHT = WIDTH = 400
@@ -34,7 +34,7 @@ COLS, LINEWIDTH, FONTSIZE = 5, 5, 35
 FONTS = ("Noto Sans CJK JP", "Noto Sans CJK SC", "Noto Sans CJK TC",
          "IPAexGothic", "IPAGothic")
 
-def gui():                                                      # {{{1
+def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
   """Tkinter GUI."""
 
   nogrid = os.environ.get("KANJIDRAW_NOGRID") in ("1", "true", "yes")
@@ -46,12 +46,15 @@ def gui():                                                      # {{{1
   win.rowconfigure(0, weight = 1)
 
   fonts = set(tkinter.font.families())
-  kanji_font = tk.font.Font(size = FONTSIZE)
+  kanji_font = tk.font.Font()
 
   for f in FONTS:
     if f in fonts:
-      kanji_font = tk.font.Font(family = f, size = FONTSIZE)
+      kanji_font.config(family = f)
       break
+
+  kanji_btn_font = kanji_font.copy()
+  kanji_btn_font.config(size = FONTSIZE)
 
   max_strokes = max(kanji_data().keys())
   drawing, x, y, strokes, lines = False, 0, 0, [], []
@@ -91,7 +94,7 @@ def gui():                                                      # {{{1
     res_frame = tk.Frame(win)
     res_btns  = tk.Frame(res_frame)
     btn_back  = tk.Button(res_btns, text = "Go Back", command = on_back(res_frame))
-    lbl_info  = tk.Label(res_btns, text = "Click to copy to clipboard")
+    lbl_info  = tk.Label(res_btns, text = info_txt)
     res_grid  = tk.Frame(res_frame)
 
     ms = matches(strokes, fuzzy = var_fuzzy.get(), offby1 = var_ob1.get())
@@ -99,7 +102,7 @@ def gui():                                                      # {{{1
       col, row = i % COLS, i // COLS
       res_grid.columnconfigure(col, weight = 1)
       res_grid.rowconfigure(row, weight = 1)
-      btn = tk.Button(res_grid, text = kanji, font = kanji_font,
+      btn = tk.Button(res_grid, text = kanji, font = kanji_btn_font,
                       command = on_select_kanji(res_frame, kanji))
       btn.grid(column = col, row = row, sticky = "nsew")
 
@@ -117,7 +120,13 @@ def gui():                                                      # {{{1
 
   def on_select_kanji(res_frame, kanji):
     def f():
-      copy_to_clipboard(kanji)
+      nonlocal drawn_kanji
+      if multiple:
+        drawn_kanji += kanji
+        kanji_lbl.config(text = drawn_kanji)
+      else:
+        (print if stdout else copy_to_clipboard)(kanji)
+        if oneshot: win.quit()
       res_frame.destroy()
       on_clear()
     return f
@@ -171,15 +180,51 @@ def gui():                                                      # {{{1
     w.pack(side = tk.LEFT, padx = 5, pady = 5)
   btns.pack(); checks.pack(); canvas.pack()
   draw_frame.grid(row = 0, column = 0, sticky = "nsew")
+
+  if multiple:
+    info_txt    = "Click to add to queue"                     #  FIXME
+    drawn_kanji = ""
+    kanji_lbl   = tk.Label(draw_frame, font = kanji_font)
+    kanji_lbl.pack()
+
+    def output():
+      nonlocal drawn_kanji
+      if drawn_kanji:
+        (print if stdout else copy_to_clipboard)(drawn_kanji)
+        drawn_kanji = ""
+        kanji_lbl.config(text = "")
+
+    def quit():
+      output()
+      win.quit()
+
+    win.bind("c", lambda e: output())
+    win.bind("q", lambda e: quit())
+    win.protocol("WM_DELETE_WINDOW", quit)
+  else:
+    if stdout:
+      info_txt = "Click to print to stdout"
+    else:
+      info_txt = "Click to copy to clipboard"
+    win.bind("q", lambda e: win.quit())
+
   win.mainloop()
                                                                 # }}}1
 
 def main():
-  if "--version" in sys.argv:
-    from .lib import __version__
-    print("{} v{}".format(NAME, __version__))
-  else:
-    gui()
+  p = argparse.ArgumentParser(prog = NAME)
+  p.add_argument("-s", "--stdout", action = "store_true",
+                 help = "print kanji to stdout instead of "
+                        "copying to clipboard")
+  g = p.add_mutually_exclusive_group()
+  g.add_argument("-o", "--oneshot", action = "store_true",
+                 help = "quit after one kanji")
+  g.add_argument("-m", "--multiple", action = "store_true",
+                 help = "queue kanji and copy/print after "
+                        "pressing 'c' or quitting")
+  p.add_argument("--version", action = "version",
+                 version = "%(prog)s {}".format(__version__))
+  gui(**vars(p.parse_args()))
 
 if __name__ == "__main__":
   if "--doctest" in sys.argv:
