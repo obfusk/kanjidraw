@@ -25,26 +25,43 @@ import argparse, os, sys
 import tkinter as tk
 import tkinter.font
 
+from tkinter import ttk
+
 from .lib import kanji_data, matches, __version__
 
 NAME, TITLE = "kanjidraw", "Kanji Draw"
 HEIGHT = WIDTH = 400
-BACKGROUND, GRIDCOLOUR = "#ccc", "#aaa"
 COLS, LINEWIDTH, FONTSIZE = 5, 5, 35
 FONTS = ("Noto Sans CJK JP", "Noto Sans CJK SC", "Noto Sans CJK TC",
          "IPAexGothic", "IPAGothic")
 
-def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
+LIGHT_THEME = dict(
+  bg = "#fff", bg_active = "#eee", fg = "#000", btn_fg = "#fff",
+  btn_bg = "#375a7f", btn_bg_active = "#1a252f",
+  btn_bg_disabled = "#7c93ab", btn_fg_disabled = "#fff",
+  canvas_fg = "#000", grid = "#999"
+)
+DARK_THEME = dict(
+  bg = "#333", bg_active = "#222", fg = "#fff", btn_fg = "#fff",
+  btn_bg = "#375a7f", btn_bg_active = "#28415b",
+  btn_bg_disabled = "#344b63", btn_fg_disabled = "#b7b7b7",
+  canvas_fg = "#ddd", grid = "#999"
+)
+
+def gui(stdout = False, oneshot = False, multiple = False,      # {{{1
+        dark = False):
   """Tkinter GUI."""
 
   nogrid = os.environ.get("KANJIDRAW_NOGRID") in ("1", "true", "yes")
-  gridcolour = BACKGROUND if nogrid else GRIDCOLOUR
+  if os.environ.get("KANJIDRAW_DARK") in ("1", "true", "yes"):
+    dark = True
 
   win = tk.Tk()
   win.title(TITLE)
   win.columnconfigure(0, weight = 1)
   win.rowconfigure(0, weight = 1)
 
+  theme = DARK_THEME if dark else LIGHT_THEME
   fonts = set(tkinter.font.families())
   kanji_font = tk.font.Font()
 
@@ -55,6 +72,19 @@ def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
 
   kanji_btn_font = kanji_font.copy()
   kanji_btn_font.config(size = FONTSIZE)
+
+  s = ttk.Style()
+  s.configure(".", background = theme["bg"], foreground = theme["fg"])
+  s.configure("TButton", background = theme["btn_bg"],
+                         foreground = theme["btn_fg"])
+  s.map(".", background = [("active", theme["bg_active"]),
+                           ("disabled", theme["bg"])])
+  s.map("TButton", background = [("active", theme["btn_bg_active"]),
+                                 ("disabled", theme["btn_bg_disabled"])],
+                   foreground = [("active", theme["btn_fg"]),
+                                 ("disabled", theme["btn_fg_disabled"])])
+  s.configure("Kanji.TButton", font = kanji_btn_font, width = 0)
+  s.configure("Kanji.TLabel", font = kanji_font)
 
   max_strokes = max(kanji_data().keys())
   drawing, x, y, strokes, lines = False, 0, 0, [], []
@@ -91,19 +121,19 @@ def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
     update_strokes(); disable_buttons()
 
   def on_done():
-    res_frame = tk.Frame(win)
-    res_btns  = tk.Frame(res_frame)
-    btn_back  = tk.Button(res_btns, text = "Go Back", command = on_back(res_frame))
-    lbl_info  = tk.Label(res_btns, text = info_txt)
-    res_grid  = tk.Frame(res_frame)
+    res_frame = ttk.Frame(win)
+    res_btns  = ttk.Frame(res_frame)
+    btn_back  = ttk.Button(res_btns, text = "Go Back", command = on_back(res_frame))
+    lbl_info  = ttk.Label(res_btns, text = info_txt)
+    res_grid  = ttk.Frame(res_frame)
 
     ms = matches(strokes, fuzzy = var_fuzzy.get(), offby1 = var_ob1.get())
     for i, (_, kanji) in enumerate(ms):
       col, row = i % COLS, i // COLS
       res_grid.columnconfigure(col, weight = 1)
       res_grid.rowconfigure(row, weight = 1)
-      btn = tk.Button(res_grid, text = kanji, font = kanji_btn_font,
-                      command = on_select_kanji(res_frame, kanji))
+      btn = ttk.Button(res_grid, text = " " + kanji + " ", style = "Kanji.TButton",
+                       command = on_select_kanji(res_frame, kanji))
       btn.grid(column = col, row = row, sticky = "nsew")
 
     btn_back.pack(side = tk.LEFT, padx = 5, pady = 5)
@@ -133,15 +163,17 @@ def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
 
   def draw_line(x2, y2):
     nonlocal x, y
-    l = canvas.create_line(x, y, x2, y2, width = LINEWIDTH, capstyle = tk.ROUND)
+    l = canvas.create_line(x, y, x2, y2, width = LINEWIDTH,
+                           capstyle = tk.ROUND, fill = theme["canvas_fg"])
     lines[-1].append(l)
     x, y = x2, y2
 
   def draw_grid():
-    for x in (WIDTH // 3, 2 * WIDTH // 3):
-      canvas.create_line(x, 0, x, HEIGHT, fill = gridcolour)
-    for y in (HEIGHT // 3, 2 * HEIGHT // 3):
-      canvas.create_line(0, y, WIDTH, y, fill = gridcolour)
+    if not nogrid:
+      for x in (WIDTH // 3, 2 * WIDTH // 3):
+        canvas.create_line(x, 0, x, HEIGHT, fill = theme["grid"])
+      for y in (HEIGHT // 3, 2 * HEIGHT // 3):
+        canvas.create_line(0, y, WIDTH, y, fill = theme["grid"])
 
   def disable_buttons():
     for w in [btn_undo, btn_clear, btn_done]: w.config(state = tk.DISABLED)
@@ -156,21 +188,22 @@ def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
     win.clipboard_clear()
     win.clipboard_append(text)
 
-  draw_frame  = tk.Frame(win)
-  btns        = tk.Frame(draw_frame)
-  btn_undo    = tk.Button(btns, text = "Undo", command = on_undo)
-  btn_clear   = tk.Button(btns, text = "Clear", command = on_clear)
-  lbl_strokes = tk.Label(btns, text = "Strokes: 0")
-  btn_done    = tk.Button(btns, text = "Done", command = on_done)
-  checks      = tk.Frame(draw_frame)
+  draw_frame  = ttk.Frame(win)
+  btns        = ttk.Frame(draw_frame)
+  btn_undo    = ttk.Button(btns, text = "Undo", command = on_undo)
+  btn_clear   = ttk.Button(btns, text = "Clear", command = on_clear)
+  lbl_strokes = ttk.Label(btns, text = "Strokes: 0")
+  btn_done    = ttk.Button(btns, text = "Done", command = on_done)
+  checks      = ttk.Frame(draw_frame)
   var_fuzzy   = tk.IntVar()
   var_ob1     = tk.IntVar()
-  check_fuzzy = tk.Checkbutton(checks, variable = var_fuzzy,
-                               text = "Ignore stroke order & direction")
-  check_ob1   = tk.Checkbutton(checks, variable = var_ob1, text = "± 1 stroke")
+  check_fuzzy = ttk.Checkbutton(checks, variable = var_fuzzy,
+                                text = "Ignore stroke order & direction")
+  check_ob1   = ttk.Checkbutton(checks, variable = var_ob1, text = "± 1 stroke")
 
   canvas = tk.Canvas(draw_frame, height = HEIGHT, width = WIDTH,
-                     bg = BACKGROUND)
+                     background = theme["bg"], highlightthickness = 1,
+                     highlightbackground = theme["canvas_fg"])
   canvas.bind("<ButtonPress-1>", on_mousedown)
   canvas.bind("<B1-Motion>", on_mousemove)
   canvas.bind("<ButtonRelease-1>", on_mouseup)
@@ -184,7 +217,7 @@ def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
   if multiple:
     info_txt    = "Click to add to queue"                     #  FIXME
     drawn_kanji = ""
-    kanji_lbl   = tk.Label(draw_frame, font = kanji_font)
+    kanji_lbl   = ttk.Label(draw_frame, style = "Kanji.TLabel")
     kanji_lbl.pack()
 
     def output():
@@ -211,7 +244,7 @@ def gui(stdout = False, oneshot = False, multiple = False):     # {{{1
   win.mainloop()
                                                                 # }}}1
 
-def main():
+def main():                                                     # {{{1
   p = argparse.ArgumentParser(prog = NAME)
   p.add_argument("-s", "--stdout", action = "store_true",
                  help = "print kanji to stdout instead of "
@@ -222,9 +255,12 @@ def main():
   g.add_argument("-m", "--multiple", action = "store_true",
                  help = "queue kanji and copy/print after "
                         "pressing 'c' or quitting")
+  p.add_argument("-d", "--dark", action = "store_true",
+                 help = "use dark theme")
   p.add_argument("--version", action = "version",
                  version = "%(prog)s {}".format(__version__))
   gui(**vars(p.parse_args()))
+                                                                # }}}1
 
 if __name__ == "__main__":
   if "--doctest" in sys.argv:

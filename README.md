@@ -116,6 +116,29 @@ bindsym $mod+Control+m exec --no-startup-id kanjidraw-paste --multiple
 
 ## Miscellaneous
 
+### GUI Options
+
+```bash
+$ kanjidraw --help
+usage: kanjidraw [-h] [-s] [-o | -m] [-d] [--version]
+
+optional arguments:
+  -h, --help      show this help message and exit
+  -s, --stdout    print kanji to stdout instead of copying to clipboard
+  -o, --oneshot   quit after one kanji
+  -m, --multiple  queue kanji and copy/print after pressing 'c' or quitting
+  -d, --dark      use dark theme
+  --version       show program's version number and exit
+```
+
+Additional keybindings: `q` to quit, `<esc>` to go back.
+
+### Enabling Dark Mode
+
+```bash
+$ export KANJIDRAW_DARK=1
+```
+
 ### Disabling the Grid
 
 ```bash
