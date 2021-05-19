@@ -251,6 +251,9 @@ def gui(stdout = False, oneshot = False, multiple = False,      # {{{1
       info_txt = "Click to copy to clipboard"
     win.bind("q", lambda e: win.quit())
 
+  win.update()
+  win.minsize(win.winfo_width(), win.winfo_height())
+  win.maxsize(win.winfo_width(), win.winfo_height())
   win.mainloop()
                                                                 # }}}1
 
