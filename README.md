@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-05-18
+    Date        : 2021-05-19
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.2.1
@@ -82,6 +82,10 @@ $ git pull --rebase
 
 #### kanjidraw-paste
 
+Opens `kanjidraw` to select one (`--oneshot`) or multiple
+(`--multiple`) kanji, and afterwards pastes the selected kanji in the
+active window.  Requires `xclip` and `xdotool`.
+
 ```bash
 #!/bin/bash
 set -e
@@ -99,6 +103,10 @@ xdotool key --delay 250 "$key"
 ```
 
 #### i3 config
+
+Keybindings for i3.  Creating custom keybindings for `kanjidraw-paste
+--oneshot` and/or `kanjidraw-paste --multiple` should work similarly
+with other window managers and desktop environments.
 
 ```
 for_window [title="Kanji Draw"] floating enable
