@@ -48,6 +48,15 @@ DARK_THEME = dict(
   canvas_fg = "#ddd", grid = "#999"
 )
 
+def frame_button(master, size, **kw):
+  frame = ttk.Frame(master, width = size, height = size)
+  frame.columnconfigure(0, weight = 1)
+  frame.rowconfigure(0, weight = 1)
+  frame.grid_propagate(False)
+  btn = ttk.Button(frame, **kw)
+  btn.grid(column = 0, row = 0, sticky = "nsew")
+  return frame, btn
+
 def gui(stdout = False, oneshot = False, multiple = False,      # {{{1
         dark = False):
   """Tkinter GUI."""
@@ -83,7 +92,7 @@ def gui(stdout = False, oneshot = False, multiple = False,      # {{{1
                                  ("disabled", theme["btn_bg_disabled"])],
                    foreground = [("active", theme["btn_fg"]),
                                  ("disabled", theme["btn_fg_disabled"])])
-  s.configure("Kanji.TButton", font = kanji_btn_font, width = 0)
+  s.configure("Kanji.TButton", font = kanji_btn_font)
   s.configure("Kanji.TLabel", font = kanji_font)
 
   max_strokes = max(kanji_data().keys())
@@ -132,9 +141,10 @@ def gui(stdout = False, oneshot = False, multiple = False,      # {{{1
       col, row = i % COLS, i // COLS
       res_grid.columnconfigure(col, weight = 1)
       res_grid.rowconfigure(row, weight = 1)
-      btn = ttk.Button(res_grid, text = " " + kanji + " ", style = "Kanji.TButton",
-                       command = on_select_kanji(res_frame, kanji))
-      btn.grid(column = col, row = row, sticky = "nsew")
+      frame, btn = frame_button(res_grid, WIDTH // COLS,
+                                text = kanji, style = "Kanji.TButton",
+                                command = on_select_kanji(res_frame, kanji))
+      frame.grid(column = col, row = row, sticky = "nsew")
 
     btn_back.pack(side = tk.LEFT, padx = 5, pady = 5)
     lbl_info.pack(side = tk.LEFT, padx = 5, pady = 5)
