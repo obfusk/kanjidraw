@@ -2,10 +2,10 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-05-13
+    Date        : 2021-05-19
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v0.2.0
+    Version     : v0.2.3
     License     : AGPLv3+
 
 }}}1 -->
@@ -28,10 +28,11 @@ list of probable matches, which will then be copied to the clipboard.
 The database is based on KanjiVG and the algorithms are based on the
 [Kanji draw](https://github.com/onitake/kanjirecog) Android app.
 
-## Library
+## Demo
 
-For a JavaScript frontend example, see e.g. jiten's
-[`kanjidraw.js`](https://github.com/obfusk/jiten/blob/master/jiten/static/kanjidraw.js).
+[Jiten Japanese Dictionary](https://jiten.obfusk.dev)
+uses `kanjidraw` with a
+[JavaScript frontend](https://github.com/obfusk/jiten/blob/master/jiten/static/kanjidraw.js).
 
 ## Requirements
 
@@ -73,6 +74,75 @@ To update to the latest development version:
 ```bash
 $ cd kanjidraw
 $ git pull --rebase
+```
+
+## Examples
+
+### Kanji Input on Linux
+
+#### kanjidraw-paste
+
+Opens `kanjidraw` to select one (`--oneshot`) or multiple
+(`--multiple`) kanji, and afterwards pastes the selected kanji in the
+active window.  Requires `xclip` and `xdotool`.
+
+```bash
+#!/bin/bash
+set -e
+pid="$( xdotool getactivewindow getwindowpid )"
+pids() { xdotool search --classname "$1" getwindowpid %@; }
+if pids urxvt | grep -q "^$pid$"; then
+  key=ctrl+alt+v
+elif pids terminal | grep -q "^$pid$"; then
+  key=ctrl+shift+v
+else
+  key=ctrl+v
+fi
+kanjidraw -s "$@" | tr -d '\n' | xclip -i -selection clipboard
+xdotool key --delay 250 "$key"
+```
+
+#### i3 config
+
+Keybindings for i3.  Creating custom keybindings for `kanjidraw-paste
+--oneshot` and/or `kanjidraw-paste --multiple` should work similarly
+with other window managers and desktop environments.
+
+```
+for_window [title="Kanji Draw"] floating enable
+bindsym $mod+Control+k exec --no-startup-id kanjidraw-paste --oneshot
+bindsym $mod+Control+m exec --no-startup-id kanjidraw-paste --multiple
+```
+
+## Miscellaneous
+
+### GUI Options
+
+```bash
+$ kanjidraw --help
+usage: kanjidraw [-h] [-s] [-o | -m] [-d] [--version]
+
+optional arguments:
+  -h, --help      show this help message and exit
+  -s, --stdout    print kanji to stdout instead of copying to clipboard
+  -o, --oneshot   quit after one kanji
+  -m, --multiple  queue kanji and copy/print after pressing 'c' or quitting
+  -d, --dark      use dark theme
+  --version       show program's version number and exit
+```
+
+Additional keybindings: `q` to quit, `<esc>` to go back.
+
+### Enabling Dark Mode
+
+```bash
+$ export KANJIDRAW_DARK=1
+```
+
+### Disabling the Grid
+
+```bash
+$ export KANJIDRAW_NOGRID=1
 ```
 
 ## License

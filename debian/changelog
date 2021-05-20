@@ -1,6 +1,6 @@
-kanjidraw (0.2.0-1ppa.focal2) focal; urgency=medium
+kanjidraw (0.2.3-1ppa.focal1) focal; urgency=medium
 
   * Ubuntu focal requires debhelper-compat = 12.
-  * v0.2.0 for Ubuntu focal.
+  * v0.2.3 for Ubuntu focal.
 
- -- Felix C. Stegerman <flx@obfusk.net>  Fri, 14 May 2021 16:44:35 +0200
+ -- Felix C. Stegerman <flx@obfusk.net>  Thu, 20 May 2021 18:52:24 +0200
