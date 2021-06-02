@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-05-19
+    Date        : 2021-06-02
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.2.3
@@ -91,9 +91,9 @@ active window.  Requires `xclip` and `xdotool`.
 set -e
 pid="$( xdotool getactivewindow getwindowpid )"
 pids() { xdotool search --classname "$1" getwindowpid %@; }
-if pids urxvt | grep -q "^$pid$"; then
+if pids rxvt | grep -q "^$pid$"; then
   key=ctrl+alt+v
-elif pids terminal | grep -q "^$pid$"; then
+elif ( pids terminal; pids st-256color ) | grep -q "^$pid$"; then
   key=ctrl+shift+v
 else
   key=ctrl+v
