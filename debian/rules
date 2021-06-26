@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
 execute_after_dh_auto_clean:
-	make cleanup
+	$(MAKE) clean
+override_dh_auto_test:
+	$(MAKE) test
 %:
 	dh $@ --with python3 --buildsystem=pybuild
