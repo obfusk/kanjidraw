@@ -1,0 +1,3 @@
+Tests: smoke
+Depends: kanjidraw
+Restrictions: allow-stderr, superficial
