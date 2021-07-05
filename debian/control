@@ -8,7 +8,7 @@ Build-Depends: debhelper-compat (= 12),
                python3-setuptools,
                python3-tk,
 Standards-Version: 4.5.1
-Vcs-Git: https://salsa.debian.org/obfusk/kanjidraw.git
+Vcs-Git: https://salsa.debian.org/obfusk/kanjidraw.git -b ubuntu/focal
 Vcs-Browser: https://salsa.debian.org/obfusk/kanjidraw
 Homepage: https://github.com/obfusk/kanjidraw
 Rules-Requires-Root: no
