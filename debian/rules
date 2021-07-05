@@ -1,7 +1,13 @@
 #!/usr/bin/make -f
 execute_after_dh_auto_clean:
 	$(MAKE) clean
+
 override_dh_auto_test:
+ifeq (,$(filter terse,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) test
+else
+	$(MAKE) test VERBOSE=
+endif
+
 %:
 	dh $@ --with python3 --buildsystem=pybuild
