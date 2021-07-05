@@ -1,0 +1,18 @@
+Index: kanjidraw/kanjidraw-paste
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ kanjidraw/kanjidraw-paste	2021-06-28 04:36:07.810344852 +0200
+@@ -0,0 +1,13 @@
++#!/bin/bash
++set -e
++pid="$( xdotool getactivewindow getwindowpid )"
++pids() { xdotool search --classname "$1" getwindowpid %@; }
++if pids rxvt | grep -q "^$pid$"; then
++  key=ctrl+alt+v
++elif ( pids terminal; pids st-256color ) | grep -q "^$pid$"; then
++  key=ctrl+shift+v
++else
++  key=ctrl+v
++fi
++kanjidraw -s "$@" | tr -d '\n' | xclip -i -selection clipboard
++xdotool key --delay 250 "$key"
