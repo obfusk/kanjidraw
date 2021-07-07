@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-06-02
+    Date        : 2021-07-07
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.2.3
@@ -17,7 +17,19 @@
 [![AGPLv3+](https://img.shields.io/badge/license-AGPLv3+-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.html)
 [![Sponsor](https://img.shields.io/badge/%E2%99%A5-support-violet.svg)](https://ko-fi.com/obfusk)
 
-## kanjidraw - handwritten kanji recognition
+<a href="https://repology.org/project/kanjidraw/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/kanjidraw.svg?header="
+    alt="Packaging status" align="right" />
+</a>
+
+<a href="https://repology.org/project/python:kanjidraw/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/python:kanjidraw.svg?header="
+    alt="Packaging status" align="right" />
+</a>
+
+# kanjidraw
+
+## handwritten kanji recognition
 
 `kanjidraw` is a simple Python library + GUI for matching (the strokes
 of a) handwritten kanji against its database.
