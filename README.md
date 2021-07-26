@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-07-07
+    Date        : 2021-07-26
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.2.3
@@ -46,17 +46,19 @@ The database is based on KanjiVG and the algorithms are based on the
 uses `kanjidraw` with a
 [JavaScript frontend](https://github.com/obfusk/jiten/blob/master/jiten/static/kanjidraw.js).
 
-## Requirements
-
-* Python >= 3.5 (w/ Tk support for the GUI).
-
-### Debian/Ubuntu
-
-```bash
-$ apt install python3-tk
-```
-
 ## Installing
+
+### Debian
+
+An official Debian package should be available soon.
+
+You can also manually build a Debian package using the `debian/sid`
+branch, or download pre-built `.deb`s via GitHub releases.
+
+### NixOS
+
+An official package is also available in
+[nixpkgs unstable](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/kanjidraw/default.nix).
 
 ### Using pip
 
@@ -86,6 +88,16 @@ To update to the latest development version:
 ```bash
 $ cd kanjidraw
 $ git pull --rebase
+```
+
+## Dependencies
+
+* Python >= 3.5 (w/ Tk support for the GUI).
+
+### Debian/Ubuntu
+
+```bash
+$ apt install python3-tk
 ```
 
 ## Examples
