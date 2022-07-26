@@ -1,10 +1,10 @@
 <!-- {{{1
 
     File        : README.md
-    Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-07-26
+    Maintainer  : FC Stegerman <flx@obfusk.net>
+    Date        : 2022-07-26
 
-    Copyright   : Copyright (C) 2021  Felix C. Stegerman
+    Copyright   : Copyright (C) 2022  FC Stegerman
     Version     : v0.2.3
     License     : AGPLv3+
 
@@ -50,7 +50,14 @@ uses `kanjidraw` with a
 
 ### Debian
 
-An official Debian package should be available soon.
+Official packages are available in
+[Debian unstable](https://packages.debian.org/unstable/kanjidraw)
+and
+[Ubuntu jammy](https://packages.ubuntu.com/jammy/kanjidraw).
+
+```bash
+$ apt install kanjidraw
+```
 
 You can also manually build a Debian package using the `debian/sid`
 branch, or download pre-built `.deb`s via GitHub releases.
@@ -173,7 +180,7 @@ $ export KANJIDRAW_NOGRID=1
 
 ### Code
 
-© Felix C. Stegerman
+© FC Stegerman
 
 [![AGPLv3+](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.html)
 
